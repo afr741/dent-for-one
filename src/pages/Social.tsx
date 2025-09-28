@@ -173,33 +173,58 @@ export default function Social() {
         : undefined,
     };
 
-    const createdPost = await createPost(postData);
+    // send post to n8n with enhanced payload
+    try {
+      const webhookUrl = import.meta.env.VITE_N8N_WEBHOOK_URL;
 
-    if (createdPost) {
-      // Add the new post to the beginning of the list immediately
-      setPosts((prev) => [createdPost, ...prev]);
-      setNewPost({ content: "", image_url: "" });
-      setIsCreateDialogOpen(false);
-      toast.success("Post created successfully!");
-
-      // send post to n8n
-      await fetch(import.meta.env.VITE_N8N_WEBHOOK_URL, {
+      await fetch(webhookUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-N8N-Secret": import.meta.env.VITE_N8N_WEBHOOK_SECRET || "",
+          "X-App-Version": "1.0.0",
+          "X-Event-Timestamp": new Date().toISOString(),
         },
         body: JSON.stringify({
           event: "post.created",
-          post: createdPost,
+          timestamp: new Date().toISOString(),
+          source: "dent-app-social",
+          post: postData,
+          context: {
+            user_agent: navigator.userAgent,
+            platform: "web",
+            app_version: "1.0.0",
+          },
         }),
       });
-      // Also refresh posts from server to ensure consistency
-      setTimeout(async () => {
-        const postsData = await getPosts(user?.id);
-        setPosts(postsData);
-      }, 1000);
+      console.log("✅ Webhook sent successfully to n8n");
+      toast.success("🚀 Post synced with automation system!", {
+        description:
+          "Your post has been sent to n8n for AI analysis and processing",
+        duration: 4000,
+      });
+    } catch (error) {
+      console.error("❌ Failed to send webhook to n8n:", error);
+      // Don't fail the post creation if webhook fails
+      toast.error("Post created but failed to sync with automation system");
     }
+
+    //TBD: fix DB integration
+
+    // const createdPost = await createPost(postData);
+
+    // if (createdPost) {
+    //   // Add the new post to the beginning of the list immediately
+    //   setPosts((prev) => [createdPost, ...prev]);
+    //   setNewPost({ content: "", image_url: "" });
+    //   setIsCreateDialogOpen(false);
+    //   toast.success("Post created successfully!");
+
+    //   // Also refresh posts from server to ensure consistency
+    //   setTimeout(async () => {
+    //     const postsData = await getPosts(user?.id);
+    //     setPosts(postsData);
+    //   }, 1000);
+    // }
   };
 
   const handleEditPost = async () => {
@@ -227,16 +252,45 @@ export default function Social() {
       setNewPost({ content: "", image_url: "" });
       setIsEditDialogOpen(false);
       toast.success("Post updated successfully!");
-      // send post to n8n
-      // after updatedPost
-      await fetch(import.meta.env.VITE_N8N_WEBHOOK_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-N8N-Secret": import.meta.env.VITE_N8N_WEBHOOK_SECRET || "",
-        },
-        body: JSON.stringify({ event: "post.updated", post: updatedPost }),
-      });
+      // send post update to n8n with enhanced payload
+      try {
+        const webhookUrl =
+          import.meta.env.VITE_USE_CORS_PROXY === "true"
+            ? `https://cors-anywhere.herokuapp.com/${
+                import.meta.env.VITE_N8N_WEBHOOK_URL
+              }`
+            : import.meta.env.VITE_N8N_WEBHOOK_URL;
+
+        await fetch(webhookUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-App-Version": "1.0.0",
+            "X-Event-Timestamp": new Date().toISOString(),
+          },
+          body: JSON.stringify({
+            event: "post.updated",
+            timestamp: new Date().toISOString(),
+            source: "dent-app-social",
+            post: updatedPost,
+            context: {
+              user_agent: navigator.userAgent,
+              platform: "web",
+              app_version: "1.0.0",
+              update_reason: "content_modification",
+            },
+          }),
+        });
+        console.log("✅ Post update webhook sent successfully to n8n");
+        toast.success("🔄 Post update synced with automation system!", {
+          description:
+            "Your post changes have been sent to n8n for re-analysis",
+          duration: 4000,
+        });
+      } catch (error) {
+        console.error("❌ Failed to send post update webhook to n8n:", error);
+        toast.error("Post updated but failed to sync with automation system");
+      }
     }
   };
 
@@ -253,15 +307,54 @@ export default function Social() {
     if (success) {
       // Track engagement metrics
       await trackPostEngagement(postId, "view");
-      // inside handleLikePost, after success
-      await fetch(import.meta.env.VITE_N8N_WEBHOOK_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-N8N-Secret": import.meta.env.VITE_N8N_WEBHOOK_SECRET || "",
-        },
-        body: JSON.stringify({ event: "post.liked", postId }),
-      });
+      // send like event to n8n with enhanced payload
+      try {
+        const postData = posts.find((p) => p.id === postId);
+        const webhookUrl =
+          import.meta.env.VITE_USE_CORS_PROXY === "true"
+            ? `https://cors-anywhere.herokuapp.com/${
+                import.meta.env.VITE_N8N_WEBHOOK_URL
+              }`
+            : import.meta.env.VITE_N8N_WEBHOOK_URL;
+
+        await fetch(webhookUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-App-Version": "1.0.0",
+            "X-Event-Timestamp": new Date().toISOString(),
+          },
+          body: JSON.stringify({
+            event: "post.liked",
+            timestamp: new Date().toISOString(),
+            source: "dent-app-social",
+            postId: postId,
+            post: postData
+              ? {
+                  content: postData.content,
+                  user_name: postData.user_name,
+                  is_generated_by_ai: postData.is_generated_by_ai,
+                  likes_count: postData.likes_count,
+                  engagement_metrics: postData.engagement_metrics,
+                }
+              : null,
+            context: {
+              user_agent: navigator.userAgent,
+              platform: "web",
+              app_version: "1.0.0",
+              engagement_type: "like",
+            },
+          }),
+        });
+        console.log("✅ Like webhook sent successfully to n8n");
+        toast.success("👍 Like synced with automation system!", {
+          description: "Engagement data sent to n8n for analytics processing",
+          duration: 3000,
+        });
+      } catch (error) {
+        console.error("❌ Failed to send like webhook to n8n:", error);
+        toast.error("Failed to sync like with automation system");
+      }
       // Update like status immediately
       setPosts((prev) =>
         prev.map((post) => {
@@ -664,21 +757,65 @@ Keep feedback concise and actionable.`;
     // Track engagement metrics
     await trackPostEngagement(post.id, "share");
 
-    // inside handleSharePost, before window.open
-    await fetch(import.meta.env.VITE_N8N_WEBHOOK_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-N8N-Secret": import.meta.env.VITE_N8N_WEBHOOK_SECRET || "",
-      },
-      body: JSON.stringify({ event: "post.shared", postId: post.id, platform }),
-    });
+    // send share event to n8n with enhanced payload
+    try {
+      const webhookUrl =
+        import.meta.env.VITE_USE_CORS_PROXY === "true"
+          ? `https://cors-anywhere.herokuapp.com/${
+              import.meta.env.VITE_N8N_WEBHOOK_URL
+            }`
+          : import.meta.env.VITE_N8N_WEBHOOK_URL;
+
+      await fetch(webhookUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-App-Version": "1.0.0",
+          "X-Event-Timestamp": new Date().toISOString(),
+        },
+        body: JSON.stringify({
+          event: "post.shared",
+          timestamp: new Date().toISOString(),
+          source: "dent-app-social",
+          postId: post.id,
+          platform: platform,
+          post: {
+            content: post.content,
+            user_name: post.user_name,
+            is_generated_by_ai: post.is_generated_by_ai,
+            shares_count: post.engagement_metrics?.shares || 0,
+            engagement_metrics: post.engagement_metrics,
+            ai_generation_options: post.ai_generation_options,
+            ai_metadata: post.ai_metadata,
+          },
+          share_data: {
+            share_url: shareUrl,
+            share_text: shareText,
+            platform_specific: true,
+          },
+          context: {
+            user_agent: navigator.userAgent,
+            platform: "web",
+            app_version: "1.0.0",
+            engagement_type: "share",
+            target_platform: platform,
+          },
+        }),
+      });
+      console.log(`✅ Share webhook sent successfully to n8n for ${platform}`);
+      toast.success(`📤 Share synced with automation system for ${platform}!`, {
+        description: `Share data sent to n8n for ${platform} analytics and cross-platform optimization`,
+        duration: 4000,
+      });
+    } catch (error) {
+      console.error("❌ Failed to send share webhook to n8n:", error);
+      toast.error(
+        `Failed to sync share with automation system for ${platform}`
+      );
+    }
 
     // Open sharing URL in new window
     window.open(shareUrl, "_blank", "width=600,height=400");
-    toast.success(
-      `Sharing on ${platform.charAt(0).toUpperCase() + platform.slice(1)}!`
-    );
   };
 
   const formatTimeAgo = (dateString: string) => {

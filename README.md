@@ -173,6 +173,49 @@ Dent App is designed to modernize dental practices by providing a unified digita
 - **Reduced no-shows** - Automated reminders and confirmations
 - **Better resource utilization** - Optimized scheduling reduces gaps
 
+## 🔄 n8n Workflow Automation
+
+### Advanced Social Media Automation
+
+The Dent App includes comprehensive **n8n workflow integration** for advanced social media automation:
+
+#### **Automated Content Processing**
+
+- **AI Content Analysis** - Automatic quality assessment and optimization
+- **Multi-Platform Adaptation** - Content optimization for Facebook, Instagram, Twitter, LinkedIn
+- **Smart Scheduling** - Optimal posting time recommendations
+- **Brand Voice Consistency** - Automated brand compliance checking
+
+#### **Real-Time Analytics & Insights**
+
+- **Performance Tracking** - Live engagement metrics and trend analysis
+- **Predictive Analytics** - AI-powered engagement forecasting
+- **ROI Analysis** - Lead generation and conversion tracking
+- **Competitive Intelligence** - Market trend monitoring
+
+#### **Automated Workflows**
+
+- **Content Publishing** - Multi-platform automated posting
+- **Engagement Management** - Automated responses and community building
+- **Lead Generation** - Patient education and appointment booking automation
+- **Crisis Management** - Automated monitoring and response protocols
+
+#### **Integration Features**
+
+- **Webhook-Based** - Real-time event processing
+- **AI-Powered** - Advanced content analysis and optimization
+- **Multi-Service** - Google Sheets, Slack, social media APIs
+- **Scalable** - Handles high-volume content and engagement
+
+### Quick Setup
+
+1. **Import Workflow** - Use `n8n-workflows/dent-app-social-automation.json`
+2. **Configure APIs** - Set up OpenAI, Google Sheets, Slack credentials
+3. **Test Integration** - Use built-in webhook tester component
+4. **Activate Automation** - Enable real-time social media automation
+
+📖 **[Complete n8n Setup Guide](./n8n-workflows/README.md)**
+
 ## 🛠️ Technical Stack
 
 ### Frontend
@@ -204,6 +247,8 @@ Dent App is designed to modernize dental practices by providing a unified digita
 - **Brand Voice Analysis** for content quality assurance
 - **OpenAI** for additional AI capabilities
 - **Social media APIs** for platform integration
+- **n8n Workflow Automation** for advanced social media automation
+- **Real-time Webhook Integration** for seamless automation
 
 ### Backend & Database Integration
 
